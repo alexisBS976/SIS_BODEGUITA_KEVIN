@@ -60,24 +60,19 @@ namespace SIS_BODEGUITA_KEVIN
         /// </summary>
         public static void InsertarVenta(string id, decimal total, int cantidad)
         {
-            // Se establece y abre la conexión a la base de datos
-            SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena);
-            conexion.Open();
+            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            {
+                string query = "INSERT INTO Ventas (id_venta, fecha_venta, total, cantidad_productos) VALUES (@id, GETDATE(), @total, @cantidad)";
+                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@total", total);
+                    cmd.Parameters.AddWithValue("@cantidad", cantidad);
 
-            // Sentencia SQL de inserción utilizando GETDATE() para asignar la fecha y hora actual del servidor
-            string query = "INSERT INTO Ventas (id_venta, fecha_venta, total, cantidad_productos) VALUES (@id, GETDATE(), @total, @cantidad)";
-            SqlCommand cmd = new SqlCommand(query, conexion);
-
-            // Definición de parámetros para evitar la inyección de código SQL malicioso y asegurar los tipos de datos
-            cmd.Parameters.AddWithValue("@id", id);
-            cmd.Parameters.AddWithValue("@total", total);
-            cmd.Parameters.AddWithValue("@cantidad", cantidad);
-
-            // Ejecuta la sentencia INSERT que altera los datos de la tabla sin retornar filas
-            cmd.ExecuteNonQuery();
-
-            // Cierre de la conexión
-            conexion.Close();
+                    conexion.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
 
         /// <summary>
@@ -86,25 +81,19 @@ namespace SIS_BODEGUITA_KEVIN
         /// <returns>Un objeto DataTable que contiene el listado histórico de todas las ventas.</returns>
         public static DataTable TraerReporte()
         {
-            // Se inicializa y abre la conexión a la base de datos
-            SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena);
-            conexion.Open();
-
-            // Consulta SQL para extraer los campos requeridos en el reporte
-            string query = "SELECT id_venta, fecha_venta, total, cantidad_productos FROM Ventas";
-            SqlCommand cmd = new SqlCommand(query, conexion);
-
-            // Se utiliza SqlDataAdapter como intermediario para extraer y formatear los datos de la consulta
-            SqlDataAdapter adaptador = new SqlDataAdapter(cmd);
-            DataTable tabla = new DataTable();
-
-            // Se rellena el contenedor DataTable en memoria con la información recolectada por el adaptador
-            adaptador.Fill(tabla);
-
-            // Se finaliza la conexión a la base de datos
-            conexion.Close();
-
-            return tabla;
+            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            {
+                string query = "SELECT id_venta, fecha_venta, total, cantidad_productos FROM Ventas";
+                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                {
+                    using (SqlDataAdapter adaptador = new SqlDataAdapter(cmd))
+                    {
+                        DataTable tabla = new DataTable();
+                        adaptador.Fill(tabla);
+                        return tabla;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -136,18 +125,19 @@ namespace SIS_BODEGUITA_KEVIN
         /// <returns></returns>
         public static decimal ObtenerCierreCajaDiario()
         {
-            SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena);
-            conexion.Open();
+            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            {
+                string query = @"SELECT ISNULL(SUM(total), 0) 
+                         FROM Ventas 
+                         WHERE DATEDIFF(day, fecha_venta, GETDATE()) = 0";
 
-            string query = @"SELECT ISNULL(SUM(total), 0) 
-                     FROM Ventas 
-                     WHERE DATEDIFF(day, fecha_venta, GETDATE()) = 0";
-
-            SqlCommand cmd = new SqlCommand(query, conexion);
-            decimal totalCobradoHoy = Convert.ToDecimal(cmd.ExecuteScalar());
-
-            conexion.Close();
-            return totalCobradoHoy;
+                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                {
+                    conexion.Open();
+                    decimal totalCobradoHoy = Convert.ToDecimal(cmd.ExecuteScalar());
+                    return totalCobradoHoy;
+                }
+            }
         }
         public static void InsertarDetalleVenta(string idVenta, string idProducto, int cantidad, decimal subtotal)
         {

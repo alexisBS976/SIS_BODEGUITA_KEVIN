@@ -63,47 +63,56 @@ namespace SIS_BODEGUITA_KEVIN
         /// </summary>
         private void CargarProductos()
         {
-            SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena);
-            conexion.Open();
-
-            string query = "SELECT nombre FROM Productos";
-            SqlCommand cmd = new SqlCommand(query, conexion);
-            SqlDataReader lector = cmd.ExecuteReader();
-
-            // Se limpian los elementos previos de ambos ComboBoxes para evitar duplicaciones
-            cmbProducto.Items.Clear();
-            cmbNombre.Items.Clear();
-
-            // Se crea una colección para el autocompletado del ComboBox de inventario
-            AutoCompleteStringCollection coleccion = new AutoCompleteStringCollection();
-
-            while (lector.Read())
+            try
             {
-                string nombreProd = lector["nombre"]?.ToString() ?? "";
-
-                if (!string.IsNullOrEmpty(nombreProd))
+                using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
                 {
-                    // Se agregan los productos a ambos ComboBox
-                    cmbProducto.Items.Add(nombreProd);
-                    cmbNombre.Items.Add(nombreProd);
+                    conexion.Open();
 
-                    // Se agregan los productos a la colección de autocompletado
-                    coleccion.Add(nombreProd);
+                    string query = "SELECT nombre FROM Productos";
+                    using (SqlCommand cmd = new SqlCommand(query, conexion))
+                    {
+                        using (SqlDataReader lector = cmd.ExecuteReader())
+                        {
+                            // Se limpian los elementos previos de ambos ComboBoxes para evitar duplicaciones
+                            cmbProducto.Items.Clear();
+                            cmbNombre.Items.Clear();
+
+                            // Se crea una colección para el autocompletado del ComboBox de inventario
+                            AutoCompleteStringCollection coleccion = new AutoCompleteStringCollection();
+
+                            while (lector.Read())
+                            {
+                                string nombreProd = lector["nombre"]?.ToString() ?? "";
+
+                                if (!string.IsNullOrEmpty(nombreProd))
+                                {
+                                    // Se agregan los productos a ambos ComboBox
+                                    cmbProducto.Items.Add(nombreProd);
+                                    cmbNombre.Items.Add(nombreProd);
+
+                                    // Se agregan los productos a la colección de autocompletado
+                                    coleccion.Add(nombreProd);
+                                }
+                            }
+
+                            // Configuración del autocompletado para el ComboBox de inventario
+                            cmbNombre.AutoCompleteCustomSource = coleccion;
+                            cmbNombre.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                            cmbNombre.AutoCompleteSource = AutoCompleteSource.CustomSource;
+
+                            // También configurar autocompletado para el ComboBox de ventas
+                            cmbProducto.AutoCompleteCustomSource = coleccion;
+                            cmbProducto.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                            cmbProducto.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                        }
+                    }
                 }
             }
-
-            lector.Close();
-            conexion.Close();
-
-            // Configuración del autocompletado para el ComboBox de inventario
-            cmbNombre.AutoCompleteCustomSource = coleccion;
-            cmbNombre.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-            cmbNombre.AutoCompleteSource = AutoCompleteSource.CustomSource;
-
-            // También configurar autocompletado para el ComboBox de ventas
-            cmbProducto.AutoCompleteCustomSource = coleccion;
-            cmbProducto.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-            cmbProducto.AutoCompleteSource = AutoCompleteSource.CustomSource;
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar productos: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         /// <summary>

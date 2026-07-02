@@ -15,23 +15,25 @@ namespace SIS_BODEGUITA_KEVIN
             List<string> listaProductos = new List<string>();
             string query = "SELECT nombre FROM Productos";
 
-            SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena);
-            conexion.Open();
-
-            SqlCommand cmd = new SqlCommand(query, conexion);
-            SqlDataReader lector = cmd.ExecuteReader();
-
-            while (lector.Read())
+            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
             {
-                string nombreProd = lector["nombre"]?.ToString() ?? "";
-                if (!string.IsNullOrEmpty(nombreProd))
+                conexion.Open();
+
+                using (SqlCommand cmd = new SqlCommand(query, conexion))
                 {
-                    listaProductos.Add(nombreProd);
+                    using (SqlDataReader lector = cmd.ExecuteReader())
+                    {
+                        while (lector.Read())
+                        {
+                            string nombreProd = lector["nombre"]?.ToString() ?? "";
+                            if (!string.IsNullOrEmpty(nombreProd))
+                            {
+                                listaProductos.Add(nombreProd);
+                            }
+                        }
+                    }
                 }
             }
-
-            lector.Close();
-            conexion.Close();
 
             return listaProductos;
         }

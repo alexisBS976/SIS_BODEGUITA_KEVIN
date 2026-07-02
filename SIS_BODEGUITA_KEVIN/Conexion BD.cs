@@ -11,7 +11,7 @@ namespace SIS_BODEGUITA_KEVIN
         /// </summary>
         public static string Cadena =
        @"Data Source=(LocalDB)\MSSQLLocalDB;
-        AttachDbFilename=|DataDirectory|\BD_BodeguitaKevin.mdf;
+        AttachDbFilename=C:\Users\alebr\Downloads\pruebas\SIS_BODEGUITA_KEVIN\BD_BodeguitaKevin.mdf;
         Integrated Security=True;
         Connect Timeout=30;";
     }
