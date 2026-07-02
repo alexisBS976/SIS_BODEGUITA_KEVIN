@@ -45,7 +45,7 @@ namespace SIS_BODEGUITA_KEVIN
             // Oculta el menú actual
             this.Hide();
 
-            // Abre el formulario de Login de forma directa (Cambia FrmLogin por el nombre real de tu Login)
+            // Abre el formulario de Login de forma directa
             FrmLogin login = new FrmLogin();
             login.ShowDialog();
 

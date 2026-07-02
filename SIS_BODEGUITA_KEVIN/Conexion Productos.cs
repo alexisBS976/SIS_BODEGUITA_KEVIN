@@ -35,6 +35,10 @@ namespace SIS_BODEGUITA_KEVIN
 
             return listaProductos;
         }
+        /// <summary>
+        /// Obtiene el precio de un producto específico dado su nombre.
+        /// </summary>
+        /// <returns></returns>
         public static decimal ObtenerPrecioProducto(string nombreProducto)
         {
             decimal precio = 0;

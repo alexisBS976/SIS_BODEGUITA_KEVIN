@@ -100,9 +100,7 @@ namespace SIS_BODEGUITA_KEVIN
             cmbNombre.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             cmbNombre.AutoCompleteSource = AutoCompleteSource.CustomSource;
 
-            // También configurar autocompletado para el ComboBox de ventas (cmbProducto)
-            // Antes sólo se rellenaban los Items, pero si AutoCompleteSource se queda en CustomSource
-            // hay que asignarle la misma colección para que sugiera coincidencias.
+            // También configurar autocompletado para el ComboBox de ventas
             cmbProducto.AutoCompleteCustomSource = coleccion;
             cmbProducto.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             cmbProducto.AutoCompleteSource = AutoCompleteSource.CustomSource;
@@ -158,7 +156,8 @@ namespace SIS_BODEGUITA_KEVIN
         }
 
         /// <summary>
-        /// Gestiona la confirmación del pago, cálculo del vuelto, inserción de la venta en la base de datos
+        /// Gestiona la confirmación del pago, cálculo del vuelto, 
+        /// inserción de la venta en la base de datos
         /// y la deducción física del stock de inventario.
         /// </summary>
         private void btnVenta_Click(object sender, EventArgs e)
@@ -191,9 +190,6 @@ namespace SIS_BODEGUITA_KEVIN
             }
 
             lblVuelto.Text = "S/. " + vueltoFinal.ToString("N2");
-
-            // ERROR CORREGIDO: Se valida qué producto se va a descontar. 
-            // Si cmbNombre está vacío, se asume el del proceso actual mediante otra vía o validación previa.
             string productoSeleccionado = string.IsNullOrEmpty(cmbNombre.Text) ? cmbProducto.Text : cmbNombre.Text;
 
             if (string.IsNullOrEmpty(productoSeleccionado))
@@ -208,7 +204,8 @@ namespace SIS_BODEGUITA_KEVIN
                 {
                     conexion.Open();
 
-                    // Usar una transacción asegura que si falla la actualización del stock, no se quede la venta huérfana
+                    // Usar una transacción asegura que si falla la actualización del stock,
+                    // no se quede la venta vacia
                     using (SqlTransaction transaccion = conexion.BeginTransaction())
                     {
                         string querySelect = "SELECT stock_actual FROM Productos WHERE nombre = @nom";
@@ -241,11 +238,11 @@ namespace SIS_BODEGUITA_KEVIN
                             return;
                         }
 
-                        // 1. Guardar la venta en la Base de Datos
+                        //Guarda la venta en la Base de Datos
                         string nuevoId = Conexion_Ventas.ObtenerSiguienteId();
                         Conexion_Ventas.InsertarVenta(nuevoId, acumuladorTotal, acumuladorCantidad);
 
-                        // 2. Actualizar el stock
+                        //Actualizar el stock
                         string queryUpdate = "UPDATE Productos SET stock_actual = @stock WHERE nombre = @nom";
                         using (SqlCommand cmdUpdate = new SqlCommand(queryUpdate, conexion, transaccion))
                         {
@@ -290,7 +287,7 @@ namespace SIS_BODEGUITA_KEVIN
         /// </summary>
         private void bntAgregar_Click(object sender, EventArgs e)
         {
-            // Validación: Verifica que se haya seleccionado un producto
+            //Verifica que se haya seleccionado un producto
             string productoActual = string.IsNullOrEmpty(cmbNombre.Text) ? cmbProducto.Text : cmbNombre.Text;
             if (string.IsNullOrWhiteSpace(productoActual))
             {
@@ -298,7 +295,7 @@ namespace SIS_BODEGUITA_KEVIN
                 return;
             }
 
-            // Validación: Verifica que la cantidad ingresada sea válida
+            //Verifica que la cantidad ingresada sea válida
             int cantidadInput;
             if (!int.TryParse(txtCantidad.Text.Trim(), out cantidadInput) || cantidadInput <= 0)
             {
@@ -306,7 +303,7 @@ namespace SIS_BODEGUITA_KEVIN
                 return;
             }
 
-            // Validación: Verifica que el precio/monto sea válido
+            //Verifica que el precio/monto sea válido
             decimal montoInput;
             if (!decimal.TryParse(txtMonto.Text.Trim(), out montoInput) || montoInput <= 0)
             {
@@ -314,7 +311,7 @@ namespace SIS_BODEGUITA_KEVIN
                 return;
             }
 
-            // Validación: Verifica que la cantidad no exceda el stock disponible
+            //Verifica que la cantidad no exceda el stock disponible
             int stockDisponible = Conexion_Inventario.ConsultarStockActual(productoActual);
             if (cantidadInput > stockDisponible)
             {
@@ -338,7 +335,8 @@ namespace SIS_BODEGUITA_KEVIN
             MessageBox.Show($"Se agregaron {cantidadInput} unidades de '{productoEnMemoria}' ", "Agregado", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         /// <summary>
-        /// Gestiona la confirmación del pago, cálculo del vuelto, inserción de la venta en la base de datos
+        /// Gestiona la confirmación del pago, cálculo del vuelto, 
+        /// inserción de la venta en la base de datos
         /// y la deducción física del stock de inventario.
         /// </summary>
         private void btnCobrar_Click(object sender, EventArgs e)
@@ -384,7 +382,7 @@ namespace SIS_BODEGUITA_KEVIN
             using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
             {
                 conexion.Open();
-                // A. Obtener el id_producto para la relación
+                //Obtener el id_producto para la relación
                 string queryIdProducto = "SELECT id_producto FROM Productos WHERE nombre = @nom";
                 SqlCommand cmdIdProd = new SqlCommand(queryIdProducto, conexion);
                 cmdIdProd.Parameters.AddWithValue("@nom", productoSeleccionado);
@@ -398,7 +396,7 @@ namespace SIS_BODEGUITA_KEVIN
                     return;
                 }
 
-                // B. GENERAR SIGUIENTE ID DE DETALLE MANUAL (Para que cree formatos como D146, D147...)
+                // Genera de manera manual la continuacion de los ID de detalle
                 string nuevoIdDetalle = "D001";
                 string queryMaxDetalle = "SELECT MAX(id_detalle) FROM DetalleVenta";
                 SqlCommand cmdMaxDetalle = new SqlCommand(queryMaxDetalle, conexion);
@@ -415,7 +413,7 @@ namespace SIS_BODEGUITA_KEVIN
                     }
                 }
 
-                // C. INSERCIÓN: Registrar el detalle en la tabla DetalleVenta usando el ID manual obtenido
+                //Registrar el detalle en la tabla DetalleVenta usando el ID manual obtenido
                 string queryInsertDetalle = @"INSERT INTO DetalleVenta (id_detalle, id_venta, id_producto, cantidad, subtotal) 
                                       VALUES (@idDetalle, @idVenta, @idProducto, @cantidad, @subtotal)";
 
@@ -430,7 +428,7 @@ namespace SIS_BODEGUITA_KEVIN
                     cmdDetalle.ExecuteNonQuery();
                 }
 
-                // D. Control y decremento del stock remanente
+                //Control y decremento del stock remanente
                 string querySelect = "SELECT stock_actual FROM Productos WHERE nombre = @nom";
                 SqlCommand cmdSelect = new SqlCommand(querySelect, conexion);
                 cmdSelect.Parameters.AddWithValue("@nom", productoSeleccionado);
@@ -480,7 +478,6 @@ namespace SIS_BODEGUITA_KEVIN
         /// <summary>
         /// Realiza un cálculo interactivo instantáneo del vuelto.
         /// </summary>
-
         private void btnVuelto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtPagoCon.Text))
@@ -688,7 +685,9 @@ namespace SIS_BODEGUITA_KEVIN
             txtMonto.Text = Conexion_Productos.ObtenerPrecioProducto(cmbProducto.Text)
                                               .ToString("0.00");
         }
-
+        /// <summary>
+        /// Calcula el vuelto automáticamente al hacer clic en la pestaña de ventas
+        /// </summary>
         private void tabVentas_Click(object sender, EventArgs e)
         {
             decimal total = acumuladorTotal;
@@ -745,8 +744,6 @@ namespace SIS_BODEGUITA_KEVIN
                     adap.Fill(tabla);
                 }
             }
-
-            // 2. Asignar la tabla limpia con todos los datos
             dgvReportes.DataSource = tabla;
         }
     }

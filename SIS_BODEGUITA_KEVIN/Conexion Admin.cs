@@ -32,9 +32,7 @@ namespace SIS_BODEGUITA_KEVIN
             // ExecuteScalar se usa porque la consulta devuelve un único valor (una fila, una columna)
             totalHoy = Convert.ToDecimal(cmd.ExecuteScalar());
 
-            // Se cierra la conexión para liberar recursos en el servidor de base de datos
             conexion.Close();
-
             return totalHoy;
         }
 
@@ -71,8 +69,6 @@ namespace SIS_BODEGUITA_KEVIN
             // El SqlDataAdapter actúa como puente para extraer los datos de la BD y llenar el DataTable
             SqlDataAdapter adaptador = new SqlDataAdapter(cmd);
             adaptador.Fill(tabla); // Llena el DataTable con los registros devueltos
-
-            // Se cierra la conexión de manera segura
             conexion.Close();
 
             return tabla;

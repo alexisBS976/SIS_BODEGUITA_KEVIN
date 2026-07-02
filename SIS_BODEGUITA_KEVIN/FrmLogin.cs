@@ -20,11 +20,7 @@ namespace SIS_BODEGUITA_KEVIN
                 MessageBox.Show("¡Bienvenido! Logueado con éxito.", "Sistemas", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 // Instancia que nos redirigue al formulario principal del sistema
                 FrmMenuPrincipal sistema = new FrmMenuPrincipal();
-
-                // Muestra el formulario del sistema en pantalla
                 sistema.Show();
-
-                // Oculta el formulario de login actual para mantener limpia la interfaz
                 this.Hide();
             }
             else

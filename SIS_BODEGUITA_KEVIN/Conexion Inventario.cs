@@ -41,8 +41,6 @@ namespace SIS_BODEGUITA_KEVIN
         /// <summary>
         /// Incrementa el stock de un producto sumando una nueva cantidad al inventario existente.
         /// </summary>
-        /// <param name="nombreProducto">Nombre del producto a surtir.</param>
-        /// <param name="cantidadNueva">Cantidad de unidades que se van a añadir.</param>
         public static void SurtirMercaderia(string nombreProducto, int cantidadNueva)
         {
             // Se establece y abre la conexión a la base de datos
@@ -63,14 +61,13 @@ namespace SIS_BODEGUITA_KEVIN
             {
                 int posicionColumna = 3;
                 stockActual = Convert.ToInt32(lector[posicionColumna]);
-                nombreColumnaCantidad = lector.GetName(posicionColumna); // Recupera el nombre real de la columna (ej. 'stock' o 'cantidad')
+                nombreColumnaCantidad = lector.GetName(posicionColumna); 
             }
-            lector.Close(); // Es obligatorio cerrar el lector antes de ejecutar un nuevo comando en la misma conexión
+            lector.Close();
 
             // Si se logró identificar el nombre de la columna, se procede con la actualización del inventario
             if (!string.IsNullOrEmpty(nombreColumnaCantidad))
             {
-                // Calcula la suma acumulada del inventario
                 int nuevoStockTotal = stockActual + cantidadNueva;
 
                 // Consulta de actualización interpolando el nombre de la columna de manera dinámica
@@ -78,12 +75,8 @@ namespace SIS_BODEGUITA_KEVIN
                 SqlCommand cmdUpdate = new SqlCommand(queryUpdate, conexion);
                 cmdUpdate.Parameters.AddWithValue("@nuevoStock", nuevoStockTotal);
                 cmdUpdate.Parameters.AddWithValue("@nom", nombreProducto);
-
-                // Ejecuta la sentencia UPDATE que modifica el registro en la base de datos
                 cmdUpdate.ExecuteNonQuery();
             }
-
-            // Cierre final de la conexión a la base de datos
             conexion.Close();
         }
     }
