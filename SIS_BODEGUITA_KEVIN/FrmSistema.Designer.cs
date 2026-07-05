@@ -104,12 +104,14 @@
             // cmbProducto
             // 
             cmbProducto.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-            cmbProducto.AutoCompleteSource = AutoCompleteSource.CustomSource;
+            cmbProducto.AutoCompleteSource = AutoCompleteSource.ListItems;
+            cmbProducto.DropDownStyle = ComboBoxStyle.DropDown;
             cmbProducto.FormattingEnabled = true;
             cmbProducto.Location = new Point(139, 39);
             cmbProducto.Name = "cmbProducto";
             cmbProducto.Size = new Size(265, 28);
             cmbProducto.TabIndex = 23;
+            cmbProducto.MaxDropDownItems = 10;
             cmbProducto.SelectedIndexChanged += cmbProducto_SelectedIndexChanged;
             // 
             // txtMonto
@@ -310,10 +312,11 @@
             // cmbNombre
             // 
             cmbNombre.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-            cmbNombre.AutoCompleteSource = AutoCompleteSource.CustomSource;
+            cmbNombre.AutoCompleteSource = AutoCompleteSource.ListItems;
+            cmbNombre.DropDownStyle = ComboBoxStyle.DropDown;
             cmbNombre.FormattingEnabled = true;
             cmbNombre.Location = new Point(160, 64);
-            cmbNombre.MaxDropDownItems = 4;
+            cmbNombre.MaxDropDownItems = 10;
             cmbNombre.Name = "cmbNombre";
             cmbNombre.Size = new Size(291, 28);
             cmbNombre.TabIndex = 21;

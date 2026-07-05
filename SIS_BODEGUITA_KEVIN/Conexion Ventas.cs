@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
-using Microsoft.Data.SqlClient; // Usar Microsoft.Data.SqlClient para usar la base de datos local
+using Microsoft.Data.Sqlite; // Usar Microsoft.Data.Sqlite para usar SQLite
 
 namespace SIS_BODEGUITA_KEVIN
 {
@@ -21,11 +21,9 @@ namespace SIS_BODEGUITA_KEVIN
             // Consulta SQL para obtener el valor máximo actual de la columna id_venta
             string query = "SELECT MAX(id_venta) FROM Ventas";
 
-            // Uso de bloque using para garantizar el cierre automático de la conexión al finalizar
-            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            using (SqliteConnection conexion = new SqliteConnection(Conexion_BD.Cadena))
             {
-                // Se inicializa el comando de ejecución junto con la consulta y la conexión establecida
-                SqlCommand cmd = new SqlCommand(query, conexion);
+                SqliteCommand cmd = new SqliteCommand(query, conexion);
 
                 // Se abre de forma explícita la conexión con la base de datos para iniciar la lectura
                 conexion.Open();
@@ -60,10 +58,10 @@ namespace SIS_BODEGUITA_KEVIN
         /// </summary>
         public static void InsertarVenta(string id, decimal total, int cantidad)
         {
-            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            using (SqliteConnection conexion = new SqliteConnection(Conexion_BD.Cadena))
             {
-                string query = "INSERT INTO Ventas (id_venta, fecha_venta, total, cantidad_productos) VALUES (@id, GETDATE(), @total, @cantidad)";
-                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                string query = "INSERT INTO Ventas (id_venta, fecha_venta, total, cantidad_productos) VALUES (@id, datetime('now'), @total, @cantidad)";
+                using (SqliteCommand cmd = new SqliteCommand(query, conexion))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
                     cmd.Parameters.AddWithValue("@total", total);
@@ -81,19 +79,28 @@ namespace SIS_BODEGUITA_KEVIN
         /// <returns>Un objeto DataTable que contiene el listado histórico de todas las ventas.</returns>
         public static DataTable TraerReporte()
         {
-            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            DataTable tabla = new DataTable();
+            tabla.Columns.Add("id_venta");
+            tabla.Columns.Add("fecha_venta");
+            tabla.Columns.Add("total");
+            tabla.Columns.Add("cantidad_productos");
+
+            using (SqliteConnection conexion = new SqliteConnection(Conexion_BD.Cadena))
             {
                 string query = "SELECT id_venta, fecha_venta, total, cantidad_productos FROM Ventas";
-                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                using (SqliteCommand cmd = new SqliteCommand(query, conexion))
                 {
-                    using (SqlDataAdapter adaptador = new SqlDataAdapter(cmd))
+                    conexion.Open();
+                    using (SqliteDataReader reader = cmd.ExecuteReader())
                     {
-                        DataTable tabla = new DataTable();
-                        adaptador.Fill(tabla);
-                        return tabla;
+                        while (reader.Read())
+                        {
+                            tabla.Rows.Add(reader[0], reader[1], reader[2], reader[3]);
+                        }
                     }
                 }
             }
+            return tabla;
         }
 
         /// <summary>
@@ -102,11 +109,11 @@ namespace SIS_BODEGUITA_KEVIN
         /// <returns>La cantidad de unidades disponibles en stock. Retorna -1 si el producto no existe.</returns>
         public static int ObtenerStockProducto(string nombreProducto)
         {
-            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            using (SqliteConnection conexion = new SqliteConnection(Conexion_BD.Cadena))
             {
                 conexion.Open();
                 string query = "SELECT stock_actual FROM Productos WHERE nombre = @nom";
-                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                using (SqliteCommand cmd = new SqliteCommand(query, conexion))
                 {
                     cmd.Parameters.AddWithValue("@nom", nombreProducto);
                     object resultado = cmd.ExecuteScalar();
@@ -125,13 +132,13 @@ namespace SIS_BODEGUITA_KEVIN
         /// <returns></returns>
         public static decimal ObtenerCierreCajaDiario()
         {
-            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            using (SqliteConnection conexion = new SqliteConnection(Conexion_BD.Cadena))
             {
-                string query = @"SELECT ISNULL(SUM(total), 0) 
+                string query = @"SELECT COALESCE(SUM(total), 0) 
                          FROM Ventas 
-                         WHERE DATEDIFF(day, fecha_venta, GETDATE()) = 0";
+                         WHERE DATE(fecha_venta) = DATE('now')";
 
-                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                using (SqliteCommand cmd = new SqliteCommand(query, conexion))
                 {
                     conexion.Open();
                     decimal totalCobradoHoy = Convert.ToDecimal(cmd.ExecuteScalar());
@@ -141,7 +148,7 @@ namespace SIS_BODEGUITA_KEVIN
         }
         public static void InsertarDetalleVenta(string idVenta, string idProducto, int cantidad, decimal subtotal)
         {
-            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            using (SqliteConnection conexion = new SqliteConnection(Conexion_BD.Cadena))
             {
                 // NOTA: 'id_detalle' no lo ponemos en el INSERT si es IDENTITY (autoincrementable numérico).
                 // Si tu id_detalle es un string tipo 'D146', necesitarás generar el ID primero.
@@ -149,7 +156,7 @@ namespace SIS_BODEGUITA_KEVIN
                 string query = @"INSERT INTO DetalleVenta (id_venta, id_producto, cantidad, subtotal) 
                          VALUES (@idVenta, @idProducto, @cantidad, @subtotal)";
 
-                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                using (SqliteCommand cmd = new SqliteCommand(query, conexion))
                 {
                     cmd.Parameters.AddWithValue("@idVenta", idVenta);
                     cmd.Parameters.AddWithValue("@idProducto", idProducto);

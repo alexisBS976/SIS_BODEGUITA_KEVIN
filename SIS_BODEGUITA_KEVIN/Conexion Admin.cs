@@ -1,55 +1,78 @@
-﻿using Microsoft.Data.SqlClient; // Usar Microsoft.Data.SqlClient para usar la base de datos local
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using Microsoft.Data.Sqlite;
 
 namespace SIS_BODEGUITA_KEVIN
 {
     public class Conexion_Admin
     {
         /// <summary>
-        /// Obtiene el total recaudado por ventas en el día actual.
+        /// Obtiene el total recaudado por ventas en el día actual utilizando funciones de fecha de SQLite.
         /// </summary>
-        /// <returns>Un valor decimal que representa la suma total de las ventas de hoy.</returns>
         public static decimal ObtenerVentasDelDia()
         {
-            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            using (SqliteConnection conexion = new SqliteConnection(Conexion_BD.Cadena))
             {
-                string query = "SELECT ISNULL(SUM(total), 0) FROM Ventas WHERE CAST(fecha_venta AS DATE) = CAST(GETDATE() AS DATE)";
-                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                string query = "SELECT IFNULL(SUM(total), 0) FROM Ventas WHERE date(fecha_venta) = date('now', 'localtime')";
+
+                using (SqliteCommand cmd = new SqliteCommand(query, conexion))
                 {
                     conexion.Open();
-                    decimal totalHoy = Convert.ToDecimal(cmd.ExecuteScalar());
-                    return totalHoy;
+                    object resultado = cmd.ExecuteScalar();
+
+                    // CORREGIDO: Se cambia el '0UI' por '0M' (sufijo correcto para tipos decimales)
+                    return resultado != null ? Convert.ToDecimal(resultado) : 0M;
                 }
             }
         }
 
         /// <summary>
-        /// Obtiene los 5 productos más vendidos basados en la cantidad total de unidades.
+        /// Obtiene los 5 productos más vendidos basados en la cantidad total de unidades (Sintaxis SQLite).
         /// </summary>
-        /// <returns>Un objeto DataTable que contiene el ranking de los 5 productos más vendidos.</returns>
         public static DataTable ObtenerTopProductos()
         {
             DataTable tabla = new DataTable();
 
-            using (SqlConnection conexion = new SqlConnection(Conexion_BD.Cadena))
+            using (SqliteConnection conexion = new SqliteConnection(Conexion_BD.Cadena))
             {
-                string query = @"SELECT TOP 5 
-                            v.id_producto AS [Código Producto], 
-                            p.nombre AS [Nombre del Producto], 
-                            SUM(cantidad) AS [Total Unidades Vendidas]
-                         FROM DetalleVenta v
-                         INNER JOIN Productos p ON v.id_producto = p.id_producto
-                         GROUP BY v.id_producto, p.nombre
-                         ORDER BY SUM(cantidad) DESC";
+                string query = @"SELECT 
+                                    v.id_producto AS [Código Producto], 
+                                    p.nombre AS [Nombre del Producto], 
+                                    SUM(v.cantidad) AS [Total Unidades Vendidas]
+                                 FROM DetalleVenta v
+                                 INNER JOIN Productos p ON v.id_producto = p.id_producto
+                                 GROUP BY v.id_producto, p.nombre
+                                 ORDER BY SUM(v.cantidad) DESC
+                                 LIMIT 5";
 
-                using (SqlCommand cmd = new SqlCommand(query, conexion))
+                using (SqliteCommand cmd = new SqliteCommand(query, conexion))
                 {
-                    using (SqlDataAdapter adaptador = new SqlDataAdapter(cmd))
+                    conexion.Open();
+                    using (SqliteDataReader lector = cmd.ExecuteReader())
                     {
-                        adaptador.Fill(tabla);
+                        tabla.Load(lector);
+                        return tabla;
+                    }
+                }
+            }
+        }
+        public static DataTable ObtenerDetalleVenta()
+        {
+            DataTable tabla = new DataTable();
+
+            using (SqliteConnection conexion = new SqliteConnection(Conexion_BD.Cadena))
+            {
+                // Al usar SELECT * evitamos poner nombres de columnas que puedan fallar
+                string query = "SELECT * FROM DetalleVenta";
+
+                using (SqliteCommand cmd = new SqliteCommand(query, conexion))
+                {
+                    conexion.Open();
+                    using (SqliteDataReader lector = cmd.ExecuteReader())
+                    {
+                        tabla.Load(lector);
                         return tabla;
                     }
                 }
