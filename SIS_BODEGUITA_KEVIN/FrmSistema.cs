@@ -332,12 +332,15 @@ namespace SIS_BODEGUITA_KEVIN
             //Guardamos en la variable global antes de vaciar los campos
             productoEnMemoria = productoActual;
 
-            //Acumulamos los valores en nuestras variables globales
+            // Acumulamos los valores en nuestras variables globales
             acumuladorCantidad += cantidadInput;
             acumuladorTotal += (montoInput * cantidadInput);
 
+            // Se muestra el total acumulado de la venta
+            txtMonto.Text = acumuladorTotal.ToString("0.00");
+
+            // Se limpian únicamente los controles necesarios
             txtCantidad.Clear();
-            txtMonto.Clear();
             cmbProducto.SelectedIndex = -1;
             cmbNombre.SelectedIndex = -1;
 
