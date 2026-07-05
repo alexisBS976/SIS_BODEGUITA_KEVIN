@@ -10,9 +10,9 @@ namespace SIS_BODEGUITA_KEVIN
         /// Clase centralizada para gestionar la conexión a la base de datos local
         /// </summary>
         public static string Cadena =
-       @"Data Source=(LocalDB)\MSSQLLocalDB;
-        AttachDbFilename=C:\Users\alebr\Downloads\pruebas\SIS_BODEGUITA_KEVIN\BD_BodeguitaKevin.mdf;
-        Integrated Security=True;
-        Connect Timeout=30;";
+@"Data Source=(LocalDB)\MSSQLLocalDB;
+AttachDbFilename=|DataDirectory|\BD_BodeguitaKevin.mdf;
+Integrated Security=True;
+Connect Timeout=30;";
     }
 }
